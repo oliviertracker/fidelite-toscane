@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Caisse — La Toscane</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#C0392B;--red-dark:#922B21;--red-deep:#641E16;
+  --cream:#FAF6EE;--cream-dark:#F0E8D8;
+  --text:#2C1810;--text-muted:#7D4E3A;
+  --green:#1a7a3c;--green-dark:#145c2d;
+  --bg:#0f0503;
+}
+html,body{min-height:100%;background:var(--bg)}
+body{
+  display:flex;flex-direction:column;align-items:center;
+  padding:20px 16px 40px;
+  font-family:'DM Sans',sans-serif;
+  background-image:radial-gradient(circle at 30% 10%,#2d0f0555 0%,transparent 45%),radial-gradient(circle at 70% 90%,#1a0a0555 0%,transparent 45%);
+}
+
+/* HOME SCREEN */
+.home{width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.home-header{text-align:center;padding:10px 0 6px}
+.home-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:white}
+.home-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-top:4px}
+.home-badge{display:inline-block;background:var(--red);color:white;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 12px;border-radius:20px;font-weight:500;margin-top:8px}
+
+.scan-btn{
+  width:100%;padding:18px;background:var(--red);color:white;
+  border:none;border-radius:18px;
+  font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;
+  cursor:pointer;transition:transform .1s,background .15s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 8px 24px rgba(192,57,43,0.35);
+}
+.scan-btn:hover{background:var(--red-dark)}
+.scan-btn:active{transform:scale(.97)}
+.scan-btn-ico{font-size:22px;line-height:1}
+
+.info-card{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:16px 18px}
+.info-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:12px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid rgba(255,255,255,.06)}
+.info-row:last-child{border-bottom:none}
+.info-label{font-size:12px;color:rgba(255,255,255,.55)}
+.info-val{font-size:12px;color:white;font-weight:500}
+
+/* SCANNER */
+.scanner-view{display:none;width:100%;max-width:380px;flex-direction:column;align-items:center;gap:0}
+.scanner-view.open{display:flex}
+.scanner-header{text-align:center;padding:0 0 16px;width:100%}
+.scanner-title{font-family:'Playfair Display',serif;font-size:20px;color:white;margin-bottom:4px}
+.scanner-sub{font-size:11px;color:rgba(255,255,255,.45);line-height:1.5}
+.scan-wrap{position:relative;width:100%;max-width:320px;border-radius:18px;overflow:hidden}
+#camVideo{width:100%;display:block;background:#111}
+.scan-corners{position:absolute;inset:0;pointer-events:none}
+.sc::before,.sc::after,.scb::before,.scb::after{content:'';position:absolute;width:36px;height:36px;border-color:white;border-style:solid}
+.sc::before{top:12px;left:12px;border-width:3px 0 0 3px;border-radius:4px 0 0 0}
+.sc::after{top:12px;right:12px;border-width:3px 3px 0 0;border-radius:0 4px 0 0}
+.scb::before{bottom:12px;left:12px;border-width:0 0 3px 3px;border-radius:0 0 0 4px}
+.scb::after{bottom:12px;right:12px;border-width:0 3px 3px 0;border-radius:0 0 4px 0}
+#camCanvas{display:none}
+.scan-status{margin-top:12px;font-size:12px;color:rgba(255,255,255,.45);text-align:center}
+.btn-back{margin-top:14px;padding:11px 26px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.12);border-radius:30px;font-family:'DM Sans',sans-serif;font-size:12.5px;cursor:pointer}
+
+/* CARD DISPLAY */
+.card-view{display:none;width:100%;max-width:380px;flex-direction:column;gap:14px}
+.card-view.open{display:flex}
+.client-card{background:var(--cream);border-radius:18px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,0.45)}
+.cc-header{background:var(--red);padding:18px 18px 14px;display:flex;align-items:center;gap:12px;position:relative;overflow:hidden}
+.cc-header::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:var(--red-dark);opacity:.4}
+.cc-avatar{width:44px;height:44px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:white;flex-shrink:0;position:relative;z-index:1}
+.cc-info{position:relative;z-index:1}
+.cc-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:white;line-height:1.1}
+.cc-id{font-size:9px;color:rgba(255,255,255,.6);letter-spacing:1px;margin-top:2px}
+.cc-body{padding:14px 16px}
+.cc-stamps-label{font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px}
+.cc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px}
+.cc-slot{aspect-ratio:1;border-radius:8px;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;border:1.5px dashed rgba(192,57,43,.2)}
+.cc-slot.filled{background:var(--red);border-color:var(--red-dark)}
+.cc-slot svg{width:18px;height:18px;fill:rgba(120,60,40,.18)}
+.cc-slot.filled svg{fill:white}
+.cc-progress{height:4px;background:var(--cream-dark);border-radius:10px;overflow:hidden;margin-bottom:6px}
+.cc-fill{height:100%;background:var(--red);border-radius:10px;transition:width .4s}
+.cc-prog-text{font-size:10px;color:var(--red);font-weight:500;text-align:center}
+
+/* ADD STAMP BUTTON */
+.stamp-action{width:100%;padding:16px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:transform .1s,background .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.stamp-action:active{transform:scale(.97)}
+.stamp-action.add{background:var(--green);color:white;box-shadow:0 6px 20px rgba(26,122,60,.35)}
+.stamp-action.add:hover{background:var(--green-dark)}
+.stamp-action.reward{background:var(--red);color:white;box-shadow:0 6px 20px rgba(192,57,43,.35)}
+.stamp-action.reward:hover{background:var(--red-dark)}
+
+/* QR DISPLAY */
+.qr-view{display:none;width:100%;max-width:380px;flex-direction:column;align-items:center;gap:14px}
+.qr-view.open{display:flex}
+.qr-card{background:var(--cream);border-radius:18px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,0.45);width:100%;padding:24px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.qr-instruction{font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:18px}
+.qr-instruction strong{color:var(--text)}
+#stampQR{width:180px;height:180px;background:white;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:2px solid var(--cream-dark);margin:0 auto 16px}
+#stampQR canvas,#stampQR img{width:170px!important;height:170px!important}
+.qr-desc{font-size:11px;color:var(--text-muted);line-height:1.5}
+.qr-desc strong{color:var(--red)}
+.qr-timer{font-size:26px;font-weight:700;color:var(--red);font-family:'Playfair Display',serif;margin-top:4px}
+.btn-done{width:100%;max-width:380px;padding:15px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.14);border-radius:16px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer}
+.btn-done:hover{background:rgba(255,255,255,.13)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:#0f0503;color:rgba(255,255,255,.9);padding:10px 18px;border-radius:30px;font-size:12px;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;z-index:300;border:1px solid rgba(255,255,255,.12)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="home" id="homeView">
+  <div class="home-header">
+    <div class="home-title">La Toscane</div>
+    <div class="home-sub">Application caisse</div>
+    <div class="home-badge">Accès patron · usage interne</div>
+  </div>
+
+  <button class="scan-btn" onclick="startScan()">
+    <span class="scan-btn-ico">📷</span>
+    Scanner la carte d'un client
+  </button>
+
+  <div class="info-card">
+    <div class="info-title">Comment ça marche</div>
+    <div class="info-row"><span class="info-label">1. Client ouvre son app</span><span class="info-val">→ QR visible</span></div>
+    <div class="info-row"><span class="info-label">2. Patron scanne ce QR</span><span class="info-val">→ carte chargée</span></div>
+    <div class="info-row"><span class="info-label">3. Patron appuie "tampon"</span><span class="info-val">→ nouveau QR</span></div>
+    <div class="info-row"><span class="info-label">4. Client scanne ce QR</span><span class="info-val">→ carte à jour</span></div>
+  </div>
+</div>
+
+<!-- SCANNER -->
+<div class="scanner-view" id="scannerView">
+  <div class="scanner-header">
+    <div class="scanner-title">Carte du client</div>
+    <div class="scanner-sub">Pointez vers le QR code sur le téléphone du client</div>
+  </div>
+  <div class="scan-wrap">
+    <video id="camVideo" autoplay playsinline muted></video>
+    <div class="scan-corners sc"></div>
+    <div class="scan-corners scb"></div>
+  </div>
+  <canvas id="camCanvas"></canvas>
+  <div class="scan-status" id="camStatus">Recherche d'un QR code…</div>
+  <button class="btn-back" onclick="goHome()">← Retour</button>
+</div>
+
+<!-- CARD DISPLAY -->
+<div class="card-view" id="cardView">
+  <div class="client-card">
+    <div class="cc-header">
+      <div class="cc-avatar" id="ccAvatar">?</div>
+      <div class="cc-info">
+        <div class="cc-name" id="ccName">Client</div>
+        <div class="cc-id" id="ccId">N° ——————</div>
+      </div>
+    </div>
+    <div class="cc-body">
+      <div class="cc-stamps-label">Tampons</div>
+      <div class="cc-grid" id="ccGrid"></div>
+      <div class="cc-progress"><div class="cc-fill" id="ccFill" style="width:0%"></div></div>
+      <div class="cc-prog-text" id="ccProgText"></div>
+    </div>
+  </div>
+
+  <button class="stamp-action add" id="addStampBtn" onclick="addStamp()">
+    ✓ Ajouter un tampon
+  </button>
+  <button class="btn-back" onclick="goHome()">← Retour sans tamponner</button>
+</div>
+
+<!-- QR DISPLAY (after stamp) -->
+<div class="qr-view" id="qrView">
+  <div class="qr-card">
+    <div class="qr-instruction">Montrez ce QR à <strong id="qrClientName">votre client</strong><br>pour qu'il scanne avec son téléphone</div>
+    <div id="stampQR"></div>
+    <div class="qr-desc">Tampon <strong id="qrStampInfo"></strong> enregistré<br>QR valide <span class="qr-timer" id="qrTimer">60</span>s</div>
+  </div>
+  <button class="btn-done" onclick="goHome()">✓ Terminé — client suivant</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SECRET='TOSCANE94';
+let camStream=null,scanActive=false,currentClient=null,timerInterval=null;
+
+function sign(id,stamps,name){
+  const str=`${id}|${stamps}|${name}|${SECRET}`;
+  let h=0;
+  for(let c of str)h=((h<<5)-h+c.charCodeAt(0))|0;
+  return Math.abs(h).toString(36).toUpperCase().slice(0,6);
+}
+
+function signStamp(id,stamps){
+  const str=`${id}|${stamps}|PATRON|${SECRET}`;
+  let h=0;
+  for(let c of str)h=((h<<5)-h+c.charCodeAt(0))|0;
+  return Math.abs(h).toString(36).toUpperCase().slice(0,6);
+}
+
+function parseClientQR(raw){
+  const p=raw.split('|');
+  if(p.length!==5||p[0]!=='LT')return null;
+  const[,id,stampsStr,nameEnc,sig]=p;
+  const stamps=parseInt(stampsStr,10);
+  const name=decodeURIComponent(nameEnc);
+  if(sign(id,stamps,name)!==sig)return null;
+  return{id,stamps,name};
+}
+
+function showView(id){
+  ['homeView','scannerView','cardView','qrView'].forEach(v=>{
+    const el=document.getElementById(v);
+    el.style.display='none';
+    el.classList.remove('open');
+  });
+  const target=document.getElementById(id);
+  if(id==='homeView'||id==='scannerView'){target.style.display='flex'}
+  else{target.classList.add('open')}
+}
+
+/* SCAN */
+function startScan(){
+  showView('scannerView');
+  scanActive=true;
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:720},height:{ideal:720}}})
+    .then(stream=>{
+      camStream=stream;
+      const v=document.getElementById('camVideo');
+      v.srcObject=stream;v.play();
+      requestAnimationFrame(scanTick);
+    })
+    .catch(err=>{
+      document.getElementById('camStatus').textContent='Caméra indisponible : '+err.message;
+    });
+}
+
+function scanTick(){
+  if(!scanActive)return;
+  const v=document.getElementById('camVideo');
+  const c=document.getElementById('camCanvas');
+  if(v.readyState===v.HAVE_ENOUGH_DATA){
+    c.width=v.videoWidth;c.height=v.videoHeight;
+    const ctx=c.getContext('2d');
+    ctx.drawImage(v,0,0);
+    const img=ctx.getImageData(0,0,c.width,c.height);
+    const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+    if(code&&code.data.startsWith('LT|')){
+      const client=parseClientQR(code.data);
+      if(client){stopScan();loadClient(client);return;}
+      else{document.getElementById('camStatus').textContent='QR invalide — pas une carte La Toscane'}
+    }
+  }
+  requestAnimationFrame(scanTick);
+}
+
+function stopScan(){
+  scanActive=false;
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+}
+
+/* CLIENT CARD */
+function loadClient(client){
+  currentClient=client;
+  const initials=(client.name||'?').split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';
+  document.getElementById('ccAvatar').textContent=initials;
+  document.getElementById('ccName').textContent=client.name||'Client anonyme';
+  document.getElementById('ccId').textContent='N° '+client.id;
+
+  const grid=document.getElementById('ccGrid');
+  grid.innerHTML='';
+  for(let i=0;i<10;i++){
+    const s=document.createElement('div');
+    s.className='cc-slot'+(i<client.stamps?' filled':'');
+    s.innerHTML=i<client.stamps
+      ?`<svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`
+      :`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" stroke-width="1.2" stroke="currentColor" fill="none"/></svg>`;
+    grid.appendChild(s);
+  }
+  document.getElementById('ccFill').style.width=(client.stamps/10*100)+'%';
+  const rem=10-client.stamps;
+  document.getElementById('ccProgText').textContent=
+    client.stamps>=10?'Carte complète — pizza offerte !':
+    rem===1?'Plus qu\'1 tampon pour la pizza offerte !':
+    `${client.stamps}/10 tampons · encore ${rem} pour la pizza offerte`;
+
+  const btn=document.getElementById('addStampBtn');
+  if(client.stamps>=10){
+    btn.textContent='🍕 Valider la pizza offerte (réinitialiser)';
+    btn.className='stamp-action reward';
+  }else{
+    btn.textContent='✓ Ajouter un tampon';
+    btn.className='stamp-action add';
+  }
+
+  showView('cardView');
+}
+
+/* ADD STAMP */
+function addStamp(){
+  if(!currentClient)return;
+  if(currentClient.stamps>=10){
+    currentClient.stamps=0; // reset after reward
+  }else{
+    currentClient.stamps++;
+  }
+  showStampQR();
+}
+
+function showStampQR(){
+  const c=currentClient;
+  const newStamps=c.stamps;
+  const sig=signStamp(c.id,newStamps);
+  const qrData=`STAMP|${c.id}|${newStamps}|${sig}`;
+
+  document.getElementById('qrClientName').textContent=c.name||'votre client';
+  document.getElementById('qrStampInfo').textContent=
+    newStamps===0?'0/10 (remise à zéro, pizza donnée)':newStamps+'/10';
+
+  const el=document.getElementById('stampQR');
+  el.innerHTML='';
+  new QRCode(el,{
+    text:qrData,
+    width:170,height:170,
+    colorDark:'#641E16',colorLight:'#FFFFFF',
+    correctLevel:QRCode.CorrectLevel.M
+  });
+
+  // Countdown timer
+  clearInterval(timerInterval);
+  let t=60;
+  document.getElementById('qrTimer').textContent=t;
+  timerInterval=setInterval(()=>{
+    t--;
+    document.getElementById('qrTimer').textContent=t;
+    if(t<=0){
+      clearInterval(timerInterval);
+      document.getElementById('qrTimer').textContent='—';
+      document.getElementById('qrDesc') && (document.getElementById('qrDesc').textContent='QR expiré');
+    }
+  },1000);
+
+  showView('qrView');
+}
+
+function goHome(){
+  stopScan();
+  clearInterval(timerInterval);
+  currentClient=null;
+  showView('homeView');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+// Init
+document.getElementById('homeView').style.display='flex';
+</script>
+</body>
+</html>
