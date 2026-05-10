@@ -1,0 +1,20 @@
+{
+  "name": "La Toscane — Caisse",
+  "short_name": "Caisse LT",
+  "description": "Application caisse et fidélité La Toscane — usage interne",
+  "start_url": "./caisse-patron.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0503",
+  "theme_color": "#922B21",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "business"]
+}
