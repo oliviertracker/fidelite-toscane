@@ -90,6 +90,12 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
 .btn-green{background:var(--green);color:white;box-shadow:0 6px 20px rgba(26,122,60,.3)}
 .btn-reward{background:var(--red);color:white;box-shadow:0 6px 20px rgba(192,57,43,.3)}
 .btn-ghost{background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1)}
+.code-entry-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:16px 18px;margin-top:12px}
+.code-entry-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:10px}
+.code-row{display:flex;gap:8px}
+.code-input{flex:1;padding:14px 16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:12px;color:white;font-family:"DM Sans",sans-serif;font-size:20px;font-weight:700;letter-spacing:3px;text-align:center;text-transform:uppercase}
+.code-input::placeholder{color:rgba(255,255,255,.25);font-size:14px;letter-spacing:1px;font-weight:400}
+.code-btn{padding:14px 20px;background:var(--red);color:white;border:none;border-radius:12px;font-size:20px;cursor:pointer}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:#0f0503;color:rgba(255,255,255,.9);padding:10px 18px;border-radius:30px;font-size:12px;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;z-index:400;border:1px solid rgba(255,255,255,.1)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -103,6 +109,13 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
   </div>
   <div id="homeView">
     <button class="scan-btn" onclick="startScanner()">📷 Scanner la carte du client</button>
+    <div class="code-entry-card">
+      <div class="code-entry-label">ou saisir le code de la carte</div>
+      <div class="code-row">
+        <input type="text" id="codeInput" class="code-input" placeholder="ex : A3X7" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+        <button class="code-btn" onclick="submitCode()">→</button>
+      </div>
+    </div>
   </div>
   <div class="newclient-card" id="newClientCard">
     <div class="newclient-title">Nouveau client — créer une carte</div>
@@ -166,6 +179,16 @@ var SECRET = "TOSCANE94";
 var BASE_CLIENT = "https://oliviertracker.github.io/fidelite-toscane/carte-client.html";
 var currentClient = null, currentQty = 1, timerInterval = null;
 var camStream = null, scanActive = false, scanInterval = null;
+
+// Base de données locale des clients (caisse = source de vérité)
+var clientDB = {};
+try { clientDB = JSON.parse(localStorage.getItem("caisse_clients") || "{}"); } catch(e) {}
+function saveClientDB() { try { localStorage.setItem("caisse_clients", JSON.stringify(clientDB)); } catch(e) {} }
+function getClientRecord(id) { return clientDB[id] || { stamps: 0, name: "" }; }
+function setClientRecord(id, stamps, name) {
+  clientDB[id] = { stamps: stamps, name: name || clientDB[id]&&clientDB[id].name || "" };
+  saveClientDB();
+}
 
 function sign(id, stamps, name) {
   var str = id + "|" + stamps + "|" + name + "|" + SECRET;
@@ -326,6 +349,7 @@ function processQR(data) {
     if (parts.length >= 4) {
       var id = parts[1], n = parseInt(parts[2], 10), sig = parts[3];
       if (!isNaN(n) && sign(id, n, "") === sig) {
+        setClientRecord(id, n, "");
         currentClient = { id: id, stamps: n, name: "" };
         renderClient();
         return;
@@ -343,6 +367,7 @@ function processQR(data) {
       var n = parseInt(stamps, 10);
       var nm = decodeURIComponent(name || "");
       if (sign(id, n, nm) === sig || sign(id, n, "") === sig) {
+        setClientRecord(id, n, nm);
         currentClient = { id: id, stamps: n, name: nm };
         renderClient();
         return;
@@ -388,6 +413,7 @@ function changeQty(delta) {
 function addStamp() {
   var c = currentClient;
   if (c.stamps>=10) { c.stamps=0; } else { c.stamps=Math.min(10, c.stamps+currentQty); }
+  setClientRecord(c.id, c.stamps, c.name);
   showReturnQR();
 }
 
@@ -412,6 +438,35 @@ function showView(v) {
   document.getElementById("actionButtons").style.display = v==="client"?"block":"none";
   document.getElementById("qrReturnCard").classList.toggle("open", v==="qr");
 }
+
+function submitCode() {
+  var raw = (document.getElementById("codeInput").value || "").trim().toUpperCase();
+  if (!raw) { showToast("Entrez le code de la carte"); return; }
+  // Format court LT|id|stamps|sig — le client peut coller tout le texte ou juste l'id
+  var parts = raw.split("|");
+  if (parts.length >= 4 && parts[0] === "LT") {
+    var id = parts[1], n = parseInt(parts[2], 10), sig = parts[3];
+    if (!isNaN(n) && sign(id, n, "") === sig) {
+      document.getElementById("codeInput").value = "";
+      currentClient = { id: id, stamps: n, name: "" };
+      renderClient(); return;
+    }
+  }
+  // Juste l'ID tapé à la main (ex: A3X7KP) — caisse retrouve le client dans son historique
+  if (/^[A-Z0-9\-]{3,10}$/.test(raw)) {
+    var fullId = raw.startsWith("LT-") ? raw : "LT-" + raw;
+    var rec = getClientRecord(fullId);
+    document.getElementById("codeInput").value = "";
+    currentClient = { id: fullId, stamps: rec.stamps, name: rec.name };
+    renderClient(); return;
+  }
+  showToast("Code non reconnu");
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  var inp = document.getElementById("codeInput");
+  if (inp) inp.addEventListener("keydown", function(e){ if(e.key==="Enter") submitCode(); });
+});
 
 function goHome() { clearInterval(timerInterval); currentClient=null; showView("home"); }
 
