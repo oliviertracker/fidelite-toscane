@@ -307,7 +307,9 @@ function getState() {
     var r = localStorage.getItem(KEY);
     if (r) { var s = JSON.parse(r); if (!s.stampLog) s.stampLog = []; return s; }
   } catch(e) {}
-  return { name: "", stamps: 0, stampLog: [], id: generateId(), date: new Date().toLocaleDateString("fr-FR") };
+  var s = { name: "", stamps: 0, stampLog: [], id: generateId(), date: new Date().toLocaleDateString("fr-FR") };
+  saveState(s);
+  return s;
 }
 
 function saveState(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch(e) {} }
