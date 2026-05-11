@@ -59,6 +59,11 @@ body{display:flex;flex-direction:column;align-items:center;padding:24px 16px 40p
 .qr-stamp-info strong{color:var(--red)}
 .qr-timer{font-family:"Playfair Display",serif;font-size:28px;font-weight:700;color:var(--red)}
 /* BUTTONS */
+.qty-selector{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden}
+.qty-btn{width:52px;height:52px;background:none;border:none;color:white;font-size:22px;cursor:pointer;transition:background .15s;flex-shrink:0}
+.qty-btn:active{background:rgba(255,255,255,.12)}
+.qty-display{flex:1;text-align:center;font-family:"Playfair Display",serif;font-size:22px;font-weight:700;color:white;line-height:1}
+.qty-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-top:2px}
 .btn{width:100%;padding:16px;border:none;border-radius:16px;font-family:"DM Sans",sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:transform .1s,background .15s;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn:active{transform:scale(.97)}
 .btn:last-child{margin-bottom:0}
@@ -121,7 +126,15 @@ body{display:flex;flex-direction:column;align-items:center;padding:24px 16px 40p
   </div>
 
   <div id="actionButtons" style="display:none">
-    <button class="btn btn-green" id="btnStamp" onclick="addStamp()">✓ Ajouter un tampon</button>
+    <div class="qty-selector">
+      <button class="qty-btn" onclick="changeQty(-1)">−</button>
+      <div class="qty-display">
+        <span id="qtyVal">1</span>
+        <span class="qty-label">tampon(s)</span>
+      </div>
+      <button class="qty-btn" onclick="changeQty(1)">+</button>
+    </div>
+    <button class="btn btn-green" id="btnStamp" onclick="addStamp()">✓ Ajouter les tampons</button>
     <button class="btn btn-ghost" onclick="goHome()">← Retour sans tamponner</button>
   </div>
 
@@ -198,14 +211,32 @@ function renderClient() {
     btn.textContent = "✓ Ajouter un tampon";
     btn.className = "btn btn-green";
   }
+  currentQty = 1;
+  document.getElementById("qtyVal").textContent = "1";
+  var btn = document.getElementById("btnStamp");
+  if (btn) btn.textContent = "✓ Ajouter 1 tampon";
   showView("client");
+}
+
+var currentQty = 1;
+
+function changeQty(delta) {
+  var c = currentClient;
+  var maxAdd = c ? Math.max(1, 10 - c.stamps) : 10;
+  currentQty = Math.min(maxAdd, Math.max(1, currentQty + delta));
+  document.getElementById("qtyVal").textContent = currentQty;
+  var btn = document.getElementById("btnStamp");
+  if (btn) btn.textContent = currentQty === 1 ? "✓ Ajouter 1 tampon" : "✓ Ajouter " + currentQty + " tampons";
 }
 
 function addStamp() {
   if (!currentClient) return;
   var c = currentClient;
-  var newStamps = c.stamps >= 10 ? 0 : c.stamps + 1;
-  c.stamps = newStamps;
+  if (c.stamps >= 10) {
+    c.stamps = 0;
+  } else {
+    c.stamps = Math.min(10, c.stamps + currentQty);
+  }
   showReturnQR();
 }
 
