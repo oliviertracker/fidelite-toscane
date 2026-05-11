@@ -38,8 +38,8 @@ body{background:#1a0a05;display:flex;flex-direction:column;align-items:center;pa
 .card-meta{font-size:9px;letter-spacing:1px;color:var(--text-muted);font-weight:300}
 .qr-section{padding:16px 20px 6px;display:flex;flex-direction:column;align-items:center;gap:8px}
 .qr-hint{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);text-align:center;font-weight:500}
-#qrcode{width:200px;height:200px;background:white;border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:2px solid var(--cream-dark);box-shadow:0 4px 16px rgba(0,0,0,0.08)}
-#qrcode canvas,#qrcode img{width:192px!important;height:192px!important}
+#qrcode{width:296px;height:296px;background:white;border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:2px solid var(--cream-dark);box-shadow:0 4px 16px rgba(0,0,0,0.08)}
+#qrcode canvas,#qrcode img{width:290px!important;height:290px!important}
 .stamps-section{padding:14px 20px 12px}
 .stamps-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .stamps-title{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-muted);font-weight:500}
@@ -251,7 +251,7 @@ function buildQR(s) {
   var el = document.getElementById("qrcode");
   el.innerHTML = "";
   if (typeof QRCode === "undefined") return;
-  try { new QRCode(el, { text: makeQRUrl(s), width: 192, height: 192, colorDark: "#641E16", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.M }); }
+  try { new QRCode(el, { text: makeQRUrl(s), width: 290, height: 290, colorDark: "#641E16", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.L }); }
   catch(e) {}
 }
 
