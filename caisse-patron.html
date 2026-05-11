@@ -96,6 +96,9 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
 .code-input{flex:1;padding:14px 16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:12px;color:white;font-family:"DM Sans",sans-serif;font-size:20px;font-weight:700;letter-spacing:3px;text-align:center;text-transform:uppercase}
 .code-input::placeholder{color:rgba(255,255,255,.25);font-size:14px;letter-spacing:1px;font-weight:400}
 .code-btn{padding:14px 20px;background:var(--red);color:white;border:none;border-radius:12px;font-size:20px;cursor:pointer}
+.validation-code-label{font-size:11px;color:var(--text-muted);margin-bottom:8px;letter-spacing:1px}
+.validation-code{font-family:"Playfair Display",serif;font-size:64px;font-weight:700;color:var(--red);letter-spacing:14px;line-height:1;margin:10px 0 14px}
+.validation-hint{font-size:11px;color:var(--text-muted);line-height:1.5;padding:0 10px}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:#0f0503;color:rgba(255,255,255,.9);padding:10px 18px;border-radius:30px;font-size:12px;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;z-index:400;border:1px solid rgba(255,255,255,.1)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -145,12 +148,11 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
     <button class="btn btn-ghost" onclick="goHome()">← Retour sans tamponner</button>
   </div>
   <div class="qr-return-card" id="qrReturnCard">
-    <div class="qr-instruction">Le client scanne ce QR<br>avec son <strong>appareil photo natif</strong></div>
-    <div id="returnQR"></div>
-    <div class="qr-stamp-info">Tampon <strong id="qrStampInfo"></strong> validé</div>
-    <div class="qr-timer" id="qrTimer">90</div>
-    <div style="font-size:10px;color:var(--text-muted);margin-top:4px;margin-bottom:16px">secondes</div>
-    <button class="btn btn-ghost" onclick="goHome()">✓ Terminé — client suivant</button>
+    <div class="qr-stamp-info">Tampon <strong id="qrStampInfo"></strong> ajouté ✓</div>
+    <div class="validation-code-label">Donnez ce code au client</div>
+    <div class="validation-code" id="validationCode">——————</div>
+    <div class="validation-hint">Le client le tape dans sa carte pour enregistrer le tampon</div>
+    <button class="btn btn-ghost" style="margin-top:20px" onclick="goHome()">✓ Terminé — client suivant</button>
   </div>
 </div>
 
@@ -195,6 +197,13 @@ function sign(id, stamps, name) {
   var h = 0;
   for (var i = 0; i < str.length; i++) { h = ((h << 5) - h + str.charCodeAt(i)) | 0; }
   return Math.abs(h).toString(36).toUpperCase().slice(0, 6);
+}
+
+function makeValidationCode(id, stamps) {
+  var str = id + "|" + stamps + "|" + SECRET;
+  var h = 0;
+  for (var i = 0; i < str.length; i++) { h = ((h << 5) - h + str.charCodeAt(i)) | 0; }
+  return ("0000" + (Math.abs(h) % 10000)).slice(-4);
 }
 
 var barcodeDetector = null;
@@ -419,15 +428,8 @@ function addStamp() {
 
 function showReturnQR() {
   var c = currentClient;
-  var sig = sign(c.id, c.stamps, "");
-  var url = BASE_CLIENT+"?id="+c.id+"&stamps="+c.stamps+"&sig="+sig;
   document.getElementById("qrStampInfo").textContent = c.stamps===0 ? "remis à zéro (pizza donnée)" : c.stamps+"/10";
-  var el = document.getElementById("returnQR"); el.innerHTML="";
-  try { new QRCode(el,{text:url,width:170,height:170,colorDark:"#641E16",colorLight:"#FFFFFF",correctLevel:QRCode.CorrectLevel.M}); } catch(e){}
-  clearInterval(timerInterval);
-  var t=90;
-  document.getElementById("qrTimer").textContent=t;
-  timerInterval=setInterval(function(){t--;document.getElementById("qrTimer").textContent=t;if(t<=0){clearInterval(timerInterval);document.getElementById("qrTimer").textContent="—";}},1000);
+  document.getElementById("validationCode").textContent = makeValidationCode(c.id, c.stamps);
   showView("qr");
 }
 
