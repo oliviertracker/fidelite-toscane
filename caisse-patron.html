@@ -24,16 +24,34 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
 .header-title{font-family:"Playfair Display",serif;font-size:26px;font-weight:700;color:white}
 .header-sub{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:3px}
 .header-badge{display:inline-block;background:var(--red);color:white;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 12px;border-radius:20px;font-weight:500;margin-top:8px}
-.scan-btn{width:100%;padding:20px;background:var(--red);color:white;border:none;border-radius:18px;font-family:"DM Sans",sans-serif;font-size:16px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 24px rgba(192,57,43,.35);position:relative;overflow:hidden}
+.scan-btn{width:100%;padding:20px;background:var(--red);color:white;border:none;border-radius:18px;font-family:"DM Sans",sans-serif;font-size:16px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 24px rgba(192,57,43,.35)}
 .scan-btn:active{transform:scale(.97)}
-#photoInput{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .newclient-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:16px 18px;text-align:center}
 .newclient-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:10px;text-align:left}
 .newclient-sub{font-size:11px;color:rgba(255,255,255,.45);margin-bottom:14px;line-height:1.4}
 #newClientQR{width:130px;height:130px;background:white;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;border:2px solid rgba(255,255,255,.1)}
 #newClientQR canvas,#newClientQR img{width:124px!important;height:124px!important}
 .newclient-hint{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:1px}
-.client-card{background:var(--cream);border-radius:18px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,0.45);display:none}
+.scanner-overlay{display:none;position:fixed;inset:0;background:#000;z-index:200;flex-direction:column;align-items:center;justify-content:center}
+.scanner-overlay.open{display:flex}
+.scanner-title{font-family:"Playfair Display",serif;font-size:18px;color:white;text-align:center;margin-bottom:8px;padding:0 20px}
+.scanner-sub{font-size:11px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:16px}
+.video-wrap{position:relative;width:280px;height:280px;border-radius:16px;overflow:hidden}
+#camVideo{width:280px;height:280px;object-fit:cover;display:block}
+.corners{position:absolute;inset:0;pointer-events:none}
+.corners::before,.corners::after,.corners-b::before,.corners-b::after{content:"";position:absolute;width:36px;height:36px;border-color:#fff;border-style:solid}
+.corners::before{top:10px;left:10px;border-width:3px 0 0 3px;border-radius:4px 0 0 0}
+.corners::after{top:10px;right:10px;border-width:3px 3px 0 0;border-radius:0 4px 0 0}
+.corners-b::before{bottom:10px;left:10px;border-width:0 0 3px 3px;border-radius:0 0 0 4px}
+.corners-b::after{bottom:10px;right:10px;border-width:0 3px 3px 0;border-radius:0 0 4px 0}
+.scan-line{position:absolute;left:10px;right:10px;height:2px;background:var(--red);animation:scanline 2s linear infinite;opacity:.8}
+@keyframes scanline{0%{top:10px}100%{top:calc(100% - 12px)}}
+#camCanvas{display:none}
+.scanner-status{margin-top:14px;font-size:12px;color:rgba(255,255,255,.5);text-align:center}
+.btn-cancel{margin-top:14px;padding:12px 32px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15);border-radius:30px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer}
+.btn-photo{margin-top:10px;padding:10px 24px;background:transparent;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.15);border-radius:30px;font-family:"DM Sans",sans-serif;font-size:12px;cursor:pointer;position:relative;overflow:hidden}
+#photoInput{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+.client-card{background:var(--cream);border-radius:18px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.45);display:none}
 .client-card.open{display:block}
 .cc-header{background:var(--red);padding:16px 18px;display:flex;align-items:center;gap:12px;position:relative;overflow:hidden}
 .cc-header::before{content:"";position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:var(--red-dark);opacity:.4}
@@ -56,7 +74,7 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
 .qty-btn:active{background:rgba(255,255,255,.12)}
 .qty-display{flex:1;text-align:center;font-family:"Playfair Display",serif;font-size:24px;font-weight:700;color:white;line-height:1}
 .qty-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-top:2px}
-.qr-return-card{background:var(--cream);border-radius:18px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,0.45);padding:22px;text-align:center;display:none}
+.qr-return-card{background:var(--cream);border-radius:18px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.45);padding:22px;text-align:center;display:none}
 .qr-return-card.open{display:block}
 .qr-instruction{font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:16px}
 .qr-instruction strong{color:var(--text)}
@@ -65,15 +83,13 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
 .qr-stamp-info{font-size:12px;color:var(--text-muted);margin-bottom:6px}
 .qr-stamp-info strong{color:var(--red)}
 .qr-timer{font-family:"Playfair Display",serif;font-size:32px;font-weight:700;color:var(--red)}
-.btn{width:100%;padding:16px;border:none;border-radius:16px;font-family:"DM Sans",sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:transform .1s,background .15s;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn{width:100%;padding:16px;border:none;border-radius:16px;font-family:"DM Sans",sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:transform .1s;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn:active{transform:scale(.97)}
 .btn:last-child{margin-bottom:0}
 .btn-green{background:var(--green);color:white;box-shadow:0 6px 20px rgba(26,122,60,.3)}
-.btn-green:hover{background:#145c2d}
 .btn-reward{background:var(--red);color:white;box-shadow:0 6px 20px rgba(192,57,43,.3)}
 .btn-ghost{background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1)}
-.btn-ghost:hover{background:rgba(255,255,255,.12)}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:#0f0503;color:rgba(255,255,255,.9);padding:10px 18px;border-radius:30px;font-size:12px;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;z-index:300;border:1px solid rgba(255,255,255,.1)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:#0f0503;color:rgba(255,255,255,.9);padding:10px 18px;border-radius:30px;font-size:12px;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;z-index:400;border:1px solid rgba(255,255,255,.1)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
@@ -84,31 +100,19 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
     <div class="header-sub">Application caisse</div>
     <div class="header-badge">Accès patron</div>
   </div>
-
-  <!-- BOUTON SCANNER -->
   <div id="homeView">
-    <button class="scan-btn" id="scanBtn">
-      📷 Scanner la carte du client
-      <input type="file" accept="image/*" capture="environment" id="photoInput" onchange="handlePhoto(event)">
-    </button>
+    <button class="scan-btn" onclick="startScanner()">📷 Scanner la carte du client</button>
   </div>
-
-  <!-- NOUVEAU CLIENT -->
   <div class="newclient-card" id="newClientCard">
     <div class="newclient-title">Nouveau client — créer une carte</div>
     <div class="newclient-sub">Le client scanne ce QR avec son appareil photo pour obtenir sa carte</div>
     <div id="newClientQR"></div>
     <div class="newclient-hint">Scanner avec l'appareil photo natif</div>
   </div>
-
-  <!-- CARTE CLIENT -->
   <div class="client-card" id="clientCard">
     <div class="cc-header">
       <div class="cc-avatar" id="ccAvatar">?</div>
-      <div class="cc-info">
-        <div class="cc-name" id="ccName">—</div>
-        <div class="cc-id" id="ccId">N° ——————</div>
-      </div>
+      <div class="cc-info"><div class="cc-name" id="ccName">—</div><div class="cc-id" id="ccId">N° ——————</div></div>
     </div>
     <div class="cc-body">
       <div class="cc-stamps-label">Tampons actuels</div>
@@ -117,29 +121,40 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
       <div class="cc-prog-text" id="ccProgText"></div>
     </div>
   </div>
-
   <div id="actionButtons" style="display:none">
     <div class="qty-selector">
       <button class="qty-btn" onclick="changeQty(-1)">−</button>
-      <div class="qty-display">
-        <span id="qtyVal">1</span>
-        <span class="qty-label">tampon(s)</span>
-      </div>
+      <div class="qty-display"><span id="qtyVal">1</span><span class="qty-label">tampon(s)</span></div>
       <button class="qty-btn" onclick="changeQty(1)">+</button>
     </div>
     <button class="btn btn-green" id="btnStamp" onclick="addStamp()">✓ Ajouter 1 tampon</button>
     <button class="btn btn-ghost" onclick="goHome()">← Retour sans tamponner</button>
   </div>
-
-  <!-- QR RETOUR -->
   <div class="qr-return-card" id="qrReturnCard">
-    <div class="qr-instruction">Le client scanne ce QR avec son<br><strong>appareil photo natif</strong></div>
+    <div class="qr-instruction">Le client scanne ce QR<br>avec son <strong>appareil photo natif</strong></div>
     <div id="returnQR"></div>
     <div class="qr-stamp-info">Tampon <strong id="qrStampInfo"></strong> validé</div>
-    <div class="qr-timer" id="qrTimer">60</div>
+    <div class="qr-timer" id="qrTimer">90</div>
     <div style="font-size:10px;color:var(--text-muted);margin-top:4px;margin-bottom:16px">secondes</div>
     <button class="btn btn-ghost" onclick="goHome()">✓ Terminé — client suivant</button>
   </div>
+</div>
+
+<!-- SCANNER OVERLAY -->
+<div class="scanner-overlay" id="scannerOverlay">
+  <div class="scanner-title">Scanner la carte du client</div>
+  <div class="scanner-sub">Pointez vers le QR code sur son téléphone</div>
+  <div class="video-wrap">
+    <video id="camVideo" autoplay playsinline muted></video>
+    <div class="corners"></div>
+    <div class="corners corners-b"></div>
+    <div class="scan-line"></div>
+  </div>
+  <canvas id="camCanvas"></canvas>
+  <div class="scanner-status" id="scannerStatus">Recherche du QR code…</div>
+  <button class="btn-cancel" onclick="stopScanner()">Annuler</button>
+  <!-- Fallback photo si vidéo impossible -->
+  <button class="btn-photo">📁 Utiliser une photo à la place<input type="file" accept="image/*" capture="environment" id="photoInput" onchange="handlePhoto(event)"></button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -147,9 +162,8 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
 <script>
 var SECRET = "TOSCANE94";
 var BASE_CLIENT = "https://oliviertracker.github.io/fidelite-toscane/carte-client.html";
-var currentClient = null;
-var currentQty = 1;
-var timerInterval = null;
+var currentClient = null, currentQty = 1, timerInterval = null;
+var camStream = null, scanActive = false, scanInterval = null;
 
 function sign(id, stamps, name) {
   var str = id + "|" + stamps + "|" + name + "|" + SECRET;
@@ -158,7 +172,52 @@ function sign(id, stamps, name) {
   return Math.abs(h).toString(36).toUpperCase().slice(0, 6);
 }
 
-// Lire une photo et extraire le QR code
+function startScanner() {
+  document.getElementById("scannerOverlay").classList.add("open");
+  scanActive = true;
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 1280 } }
+  }).then(function(stream) {
+    camStream = stream;
+    var v = document.getElementById("camVideo");
+    v.srcObject = stream;
+    v.play();
+    v.addEventListener("loadedmetadata", function() {
+      // Scanner toutes les 300ms pour ne pas rater le QR
+      scanInterval = setInterval(doScanFrame, 300);
+    });
+  }).catch(function(err) {
+    document.getElementById("scannerStatus").textContent = "Caméra non disponible — utilisez la photo";
+  });
+}
+
+function doScanFrame() {
+  if (!scanActive) return;
+  var v = document.getElementById("camVideo");
+  var c = document.getElementById("camCanvas");
+  if (v.readyState < v.HAVE_ENOUGH_DATA) return;
+  var size = Math.min(v.videoWidth, v.videoHeight);
+  var offX = (v.videoWidth - size) / 2;
+  var offY = (v.videoHeight - size) / 2;
+  c.width = size; c.height = size;
+  var ctx = c.getContext("2d");
+  ctx.drawImage(v, offX, offY, size, size, 0, 0, size, size);
+  var imageData = ctx.getImageData(0, 0, size, size);
+  var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+  if (!code) code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
+  if (code && code.data) {
+    stopScanner();
+    processQR(code.data);
+  }
+}
+
+function stopScanner() {
+  scanActive = false;
+  clearInterval(scanInterval);
+  if (camStream) { camStream.getTracks().forEach(function(t){ t.stop(); }); camStream = null; }
+  document.getElementById("scannerOverlay").classList.remove("open");
+}
+
 function handlePhoto(event) {
   var file = event.target.files[0];
   if (!file) return;
@@ -166,22 +225,14 @@ function handlePhoto(event) {
   reader.onload = function(e) {
     var img = new Image();
     img.onload = function() {
-      var canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      var ctx = canvas.getContext("2d");
+      var c = document.createElement("canvas");
+      c.width = img.width; c.height = img.height;
+      var ctx = c.getContext("2d");
       ctx.drawImage(img, 0, 0);
-      var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
-      if (!code) {
-        code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
-      }
-      if (code) {
-        processQR(code.data);
-      } else {
-        showToast("QR non détecté — réessayez");
-      }
-      // Reset input pour permettre la même photo
+      var imageData = ctx.getImageData(0, 0, c.width, c.height);
+      var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
+      if (code) { stopScanner(); processQR(code.data); }
+      else { showToast("QR non détecté — réessayez"); }
       document.getElementById("photoInput").value = "";
     };
     img.src = e.target.result;
@@ -190,7 +241,6 @@ function handlePhoto(event) {
 }
 
 function processQR(data) {
-  // Parser URL avec paramètres
   try {
     var url = new URL(data);
     var id = url.searchParams.get("id");
@@ -198,20 +248,21 @@ function processQR(data) {
     var name = url.searchParams.get("name");
     var sig = url.searchParams.get("sig");
     if (id && stamps !== null && sig) {
-      var expectedSig = sign(id, parseInt(stamps, 10), decodeURIComponent(name || ""));
-      if (sig === expectedSig) {
-        currentClient = { id: id, stamps: parseInt(stamps, 10), name: decodeURIComponent(name || "") };
+      var n = parseInt(stamps, 10);
+      var nm = decodeURIComponent(name || "");
+      if (sign(id, n, nm) === sig) {
+        currentClient = { id: id, stamps: n, name: nm };
         renderClient();
         return;
       }
     }
   } catch(e) {}
-  showToast("QR non reconnu — carte La Toscane uniquement");
+  showToast("QR non reconnu");
 }
 
 function renderClient() {
   var c = currentClient;
-  var initials = (c.name || "?").split(" ").map(function(w){ return w[0] || ""; }).join("").toUpperCase().slice(0,2) || "?";
+  var initials = (c.name||"?").split(" ").map(function(w){return w[0]||"";}).join("").toUpperCase().slice(0,2)||"?";
   document.getElementById("ccAvatar").textContent = initials;
   document.getElementById("ccName").textContent = c.name || "Client anonyme";
   document.getElementById("ccId").textContent = "N° " + c.id;
@@ -224,95 +275,81 @@ function renderClient() {
       : '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" stroke-width="1.2" stroke="currentColor" fill="none"/></svg>';
     grid.appendChild(s);
   }
-  document.getElementById("ccFill").style.width = (c.stamps / 10 * 100) + "%";
-  var rem = 10 - c.stamps;
-  document.getElementById("ccProgText").textContent = c.stamps >= 10 ? "Carte complète — pizza offerte !" : c.stamps + "/10 tampons · encore " + rem + " pour la pizza";
+  document.getElementById("ccFill").style.width = (c.stamps/10*100)+"%";
+  var rem = 10-c.stamps;
+  document.getElementById("ccProgText").textContent = c.stamps>=10 ? "Carte complète — pizza offerte !" : c.stamps+"/10 tampons · encore "+rem+" pour la pizza";
   currentQty = 1;
   document.getElementById("qtyVal").textContent = "1";
-  document.getElementById("btnStamp").textContent = c.stamps >= 10 ? "🍕 Valider la pizza offerte" : "✓ Ajouter 1 tampon";
-  document.getElementById("btnStamp").className = c.stamps >= 10 ? "btn btn-reward" : "btn btn-green";
+  var btn = document.getElementById("btnStamp");
+  btn.textContent = c.stamps>=10 ? "🍕 Valider la pizza offerte" : "✓ Ajouter 1 tampon";
+  btn.className = c.stamps>=10 ? "btn btn-reward" : "btn btn-green";
   showView("client");
 }
 
 function changeQty(delta) {
-  var c = currentClient;
-  var maxAdd = c ? Math.max(1, 10 - c.stamps) : 10;
-  currentQty = Math.min(maxAdd, Math.max(1, currentQty + delta));
+  var max = currentClient ? Math.max(1, 10-currentClient.stamps) : 10;
+  currentQty = Math.min(max, Math.max(1, currentQty+delta));
   document.getElementById("qtyVal").textContent = currentQty;
-  document.getElementById("btnStamp").textContent = currentQty === 1 ? "✓ Ajouter 1 tampon" : "✓ Ajouter " + currentQty + " tampons";
+  document.getElementById("btnStamp").textContent = currentQty===1 ? "✓ Ajouter 1 tampon" : "✓ Ajouter "+currentQty+" tampons";
 }
 
 function addStamp() {
   var c = currentClient;
-  if (c.stamps >= 10) { c.stamps = 0; }
-  else { c.stamps = Math.min(10, c.stamps + currentQty); }
+  if (c.stamps>=10) { c.stamps=0; } else { c.stamps=Math.min(10, c.stamps+currentQty); }
   showReturnQR();
 }
 
 function showReturnQR() {
   var c = currentClient;
-  var sig = sign(c.id, c.stamps, c.name || "");
-  var returnUrl = BASE_CLIENT + "?id=" + c.id + "&stamps=" + c.stamps + "&name=" + encodeURIComponent(c.name || "") + "&sig=" + sig;
-  document.getElementById("qrStampInfo").textContent = c.stamps === 0 ? "remis à zéro (pizza donnée)" : c.stamps + "/10";
-  var el = document.getElementById("returnQR"); el.innerHTML = "";
-  try { new QRCode(el, { text: returnUrl, width: 170, height: 170, colorDark: "#641E16", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.M }); }
-  catch(e) {}
+  var sig = sign(c.id, c.stamps, c.name||"");
+  var url = BASE_CLIENT+"?id="+c.id+"&stamps="+c.stamps+"&name="+encodeURIComponent(c.name||"")+"&sig="+sig;
+  document.getElementById("qrStampInfo").textContent = c.stamps===0 ? "remis à zéro (pizza donnée)" : c.stamps+"/10";
+  var el = document.getElementById("returnQR"); el.innerHTML="";
+  try { new QRCode(el,{text:url,width:170,height:170,colorDark:"#641E16",colorLight:"#FFFFFF",correctLevel:QRCode.CorrectLevel.M}); } catch(e){}
   clearInterval(timerInterval);
-  var t = 90;
-  document.getElementById("qrTimer").textContent = t;
-  timerInterval = setInterval(function() {
-    t--; document.getElementById("qrTimer").textContent = t;
-    if (t <= 0) { clearInterval(timerInterval); document.getElementById("qrTimer").textContent = "—"; }
-  }, 1000);
+  var t=90;
+  document.getElementById("qrTimer").textContent=t;
+  timerInterval=setInterval(function(){t--;document.getElementById("qrTimer").textContent=t;if(t<=0){clearInterval(timerInterval);document.getElementById("qrTimer").textContent="—";}},1000);
   showView("qr");
 }
 
-function showView(view) {
-  document.getElementById("homeView").style.display = view === "home" ? "block" : "none";
-  document.getElementById("newClientCard").style.display = view === "home" ? "block" : "none";
-  document.getElementById("clientCard").classList.toggle("open", view === "client" || view === "qr");
-  document.getElementById("actionButtons").style.display = view === "client" ? "block" : "none";
-  document.getElementById("qrReturnCard").classList.toggle("open", view === "qr");
+function showView(v) {
+  document.getElementById("homeView").style.display = v==="home"?"block":"none";
+  document.getElementById("newClientCard").style.display = v==="home"?"block":"none";
+  document.getElementById("clientCard").classList.toggle("open", v==="client"||v==="qr");
+  document.getElementById("actionButtons").style.display = v==="client"?"block":"none";
+  document.getElementById("qrReturnCard").classList.toggle("open", v==="qr");
 }
 
-function goHome() {
-  clearInterval(timerInterval); currentClient = null; showView("home");
-}
+function goHome() { clearInterval(timerInterval); currentClient=null; showView("home"); }
 
 function showToast(msg) {
-  var t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show");
-  clearTimeout(window._tt); window._tt = setTimeout(function(){ t.classList.remove("show"); }, 2800);
+  var t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(window._tt);window._tt=setTimeout(function(){t.classList.remove("show");},2800);
 }
 
-// QR nouveau client
 function buildNewClientQR() {
-  var el = document.getElementById("newClientQR");
-  if (!el || typeof QRCode === "undefined") return;
-  try { new QRCode(el, { text: BASE_CLIENT, width: 124, height: 124, colorDark: "#641E16", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.M }); }
-  catch(e) {}
+  var el=document.getElementById("newClientQR");
+  if(!el||typeof QRCode==="undefined") return;
+  try{new QRCode(el,{text:BASE_CLIENT,width:124,height:124,colorDark:"#641E16",colorLight:"#FFFFFF",correctLevel:QRCode.CorrectLevel.M});}catch(e){}
 }
 
-// Lire params URL si arrivée depuis un lien
 function checkUrlParams() {
-  var params = new URLSearchParams(window.location.search);
-  var id = params.get("id");
-  var stamps = params.get("stamps");
-  var name = params.get("name");
-  var sig = params.get("sig");
-  if (id && stamps !== null && sig) {
-    var expectedSig = sign(id, parseInt(stamps, 10), decodeURIComponent(name || ""));
-    if (sig === expectedSig) {
-      currentClient = { id: id, stamps: parseInt(stamps, 10), name: decodeURIComponent(name || "") };
-      window.history.replaceState({}, "", window.location.pathname);
-      renderClient();
-      return;
+  var p=new URLSearchParams(window.location.search);
+  var id=p.get("id"),stamps=p.get("stamps"),name=p.get("name"),sig=p.get("sig");
+  if(id&&stamps!==null&&sig){
+    var n=parseInt(stamps,10),nm=decodeURIComponent(name||"");
+    if(sign(id,n,nm)===sig){
+      currentClient={id:id,stamps:n,name:nm};
+      window.history.replaceState({},"",window.location.pathname);
+      renderClient(); return;
     }
   }
   showView("home");
 }
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", function() { navigator.serviceWorker.register("./sw.js").catch(function(){}); });
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(){});});
 }
 
 checkUrlParams();
