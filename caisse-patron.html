@@ -151,7 +151,7 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
     <div class="validation-code-label">Donnez ce code au client</div>
     <div class="validation-code" id="validationCode">——————</div>
     <div class="validation-hint">Le client le tape dans sa carte pour enregistrer le tampon</div>
-    <button class="btn btn-ghost" style="margin-top:20px" onclick="goHome()">✓ Terminé — client suivant</button>
+    <button class="btn" style="margin-top:20px;background:var(--red-dark);color:white;" onclick="goHome()">✓ Terminé — client suivant</button>
   </div>
 </div>
 
@@ -453,6 +453,16 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function goHome() { clearInterval(timerInterval); currentClient=null; showView("home"); }
+
+// Pull-to-refresh : tirer vers le bas pour revenir à l'accueil
+(function() {
+  var startY = 0;
+  document.addEventListener("touchstart", function(e) { startY = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener("touchend", function(e) {
+    var dy = e.changedTouches[0].clientY - startY;
+    if (dy > 80 && window.scrollY === 0) { goHome(); }
+  }, { passive: true });
+})();
 
 function showToast(msg) {
   var t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");
