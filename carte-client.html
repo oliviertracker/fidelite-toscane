@@ -230,9 +230,9 @@ function sign(id, stamps, name) {
   return Math.abs(h).toString(36).toUpperCase().slice(0, 6);
 }
 
-function makeQRUrl(s) {
-  var sig = sign(s.id, s.stamps, s.name || "");
-  return BASE_URL + "?id=" + s.id + "&stamps=" + s.stamps + "&name=" + encodeURIComponent(s.name || "") + "&sig=" + sig;
+function makeQRData(s) {
+  var sig = sign(s.id, s.stamps, "");
+  return "LT|" + s.id + "|" + s.stamps + "|" + sig;
 }
 
 function generateId() { return "LT-" + Date.now().toString(36).toUpperCase().slice(-6); }
@@ -251,7 +251,7 @@ function buildQR(s) {
   var el = document.getElementById("qrcode");
   el.innerHTML = "";
   if (typeof QRCode === "undefined") return;
-  try { new QRCode(el, { text: makeQRUrl(s), width: 290, height: 290, colorDark: "#641E16", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.L }); }
+  try { new QRCode(el, { text: makeQRData(s), width: 290, height: 290, colorDark: "#641E16", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.L }); }
   catch(e) {}
 }
 
@@ -305,7 +305,7 @@ function checkUrlParams() {
   if (id && stampsParam !== null && sig) {
     var newStamps = parseInt(stampsParam, 10);
     var name = decodeURIComponent(nameParam || "");
-    var expectedSig = sign(id, newStamps, name);
+    var expectedSig = sign(id, newStamps, "");
     if (sig === expectedSig) {
       var s = getState();
       // Même carte : mettre à jour les tampons

@@ -320,6 +320,19 @@ function tryScanWithJsQR(img) {
 }
 
 function processQR(data) {
+  // Nouveau format court : LT|id|tampons|sig
+  if (data && data.startsWith("LT|")) {
+    var parts = data.split("|");
+    if (parts.length >= 4) {
+      var id = parts[1], n = parseInt(parts[2], 10), sig = parts[3];
+      if (!isNaN(n) && sign(id, n, "") === sig) {
+        currentClient = { id: id, stamps: n, name: "" };
+        renderClient();
+        return;
+      }
+    }
+  }
+  // Ancien format URL (compatibilité)
   try {
     var url = new URL(data);
     var id = url.searchParams.get("id");
@@ -329,7 +342,7 @@ function processQR(data) {
     if (id && stamps !== null && sig) {
       var n = parseInt(stamps, 10);
       var nm = decodeURIComponent(name || "");
-      if (sign(id, n, nm) === sig) {
+      if (sign(id, n, nm) === sig || sign(id, n, "") === sig) {
         currentClient = { id: id, stamps: n, name: nm };
         renderClient();
         return;
@@ -380,8 +393,8 @@ function addStamp() {
 
 function showReturnQR() {
   var c = currentClient;
-  var sig = sign(c.id, c.stamps, c.name||"");
-  var url = BASE_CLIENT+"?id="+c.id+"&stamps="+c.stamps+"&name="+encodeURIComponent(c.name||"")+"&sig="+sig;
+  var sig = sign(c.id, c.stamps, "");
+  var url = BASE_CLIENT+"?id="+c.id+"&stamps="+c.stamps+"&sig="+sig;
   document.getElementById("qrStampInfo").textContent = c.stamps===0 ? "remis à zéro (pizza donnée)" : c.stamps+"/10";
   var el = document.getElementById("returnQR"); el.innerHTML="";
   try { new QRCode(el,{text:url,width:170,height:170,colorDark:"#641E16",colorLight:"#FFFFFF",correctLevel:QRCode.CorrectLevel.M}); } catch(e){}
