@@ -174,8 +174,14 @@ function sign(id, stamps, name) {
   return Math.abs(h).toString(36).toUpperCase().slice(0, 6);
 }
 
+var barcodeDetector = null;
+if ('BarcodeDetector' in window) {
+  try { barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] }); } catch(e) {}
+}
+
 function startScanner() {
   document.getElementById("scannerOverlay").classList.add("open");
+  document.getElementById("scannerStatus").textContent = "Recherche du QR code…";
   scanActive = true;
   clearInterval(scanInterval);
   scanInterval = null;
@@ -192,34 +198,27 @@ function startScanner() {
     var v = document.getElementById("camVideo");
     v.srcObject = stream;
 
-    // FIX: démarrer le scan dès que la vidéo peut jouer (oncanplay)
-    // ET avec un fallback 1s pour éviter la race condition sur loadedmetadata
     v.oncanplay = function() {
       if (scanActive && !scanInterval) {
-        scanInterval = setInterval(doScanFrame, 200);
+        scanInterval = setInterval(doScanFrame, 250);
       }
     };
-    // Fallback si oncanplay est déjà passé
     setTimeout(function() {
       if (scanActive && !scanInterval) {
-        scanInterval = setInterval(doScanFrame, 200);
+        scanInterval = setInterval(doScanFrame, 250);
       }
     }, 800);
 
     var playPromise = v.play();
     if (playPromise !== undefined) {
-      playPromise.catch(function(err) {
-        // Autoplay bloqué sur certains navigateurs — on démarre quand même le scan
-        if (scanActive && !scanInterval) {
-          scanInterval = setInterval(doScanFrame, 200);
-        }
+      playPromise.catch(function() {
+        if (scanActive && !scanInterval) scanInterval = setInterval(doScanFrame, 250);
       });
     }
   }).catch(function(err) {
     var msg = "Caméra non disponible";
     if (err.name === "NotAllowedError") msg = "Permission caméra refusée — utilisez la photo";
     else if (err.name === "NotFoundError") msg = "Aucune caméra trouvée — utilisez la photo";
-    else msg = "Caméra non disponible — utilisez la photo";
     document.getElementById("scannerStatus").textContent = msg;
   });
 }
@@ -227,22 +226,33 @@ function startScanner() {
 function doScanFrame() {
   if (!scanActive) return;
   var v = document.getElementById("camVideo");
-  var c = document.getElementById("camCanvas");
   if (v.readyState < v.HAVE_ENOUGH_DATA) return;
+
+  // Priorité : BarcodeDetector natif (iOS 17+, Android Chrome)
+  if (barcodeDetector) {
+    barcodeDetector.detect(v).then(function(codes) {
+      if (codes.length > 0 && scanActive) {
+        stopScanner();
+        processQR(codes[0].rawValue);
+      }
+    }).catch(function() {});
+    return;
+  }
+
+  // Fallback : jsQR via canvas
+  if (typeof jsQR === 'undefined') {
+    document.getElementById("scannerStatus").textContent = "Librairie QR non chargée — utilisez la photo";
+    return;
+  }
+  var c = document.getElementById("camCanvas");
   var size = Math.min(v.videoWidth, v.videoHeight);
   if (size === 0) return;
-  var offX = (v.videoWidth - size) / 2;
-  var offY = (v.videoHeight - size) / 2;
   c.width = size; c.height = size;
   var ctx = c.getContext("2d");
-  ctx.drawImage(v, offX, offY, size, size, 0, 0, size, size);
+  ctx.drawImage(v, (v.videoWidth-size)/2, (v.videoHeight-size)/2, size, size, 0, 0, size, size);
   var imageData = ctx.getImageData(0, 0, size, size);
-  var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
-  if (!code) code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
-  if (code && code.data) {
-    stopScanner();
-    processQR(code.data);
-  }
+  var code = jsQR(imageData.data, size, size, { inversionAttempts: "attemptBoth" });
+  if (code && code.data) { stopScanner(); processQR(code.data); }
 }
 
 function stopScanner() {
@@ -264,24 +274,49 @@ function handlePhoto(event) {
   reader.onload = function(e) {
     var img = new Image();
     img.onload = function() {
-      var c = document.createElement("canvas");
-      c.width = img.width; c.height = img.height;
-      var ctx = c.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      var imageData = ctx.getImageData(0, 0, c.width, c.height);
-      var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
-      if (code && code.data) {
-        stopScanner();
-        processQR(code.data);
+      // Priorité : BarcodeDetector natif
+      if (barcodeDetector && typeof createImageBitmap !== 'undefined') {
+        createImageBitmap(img).then(function(bitmap) {
+          return barcodeDetector.detect(bitmap);
+        }).then(function(codes) {
+          if (codes.length > 0) {
+            stopScanner();
+            processQR(codes[0].rawValue);
+          } else {
+            document.getElementById("scannerStatus").textContent = "QR non détecté — réessayez";
+            showToast("QR non détecté dans la photo");
+          }
+        }).catch(function() {
+          tryScanWithJsQR(img);
+        });
       } else {
-        document.getElementById("scannerStatus").textContent = "QR non détecté — réessayez";
-        showToast("QR non détecté dans la photo");
+        tryScanWithJsQR(img);
       }
       document.getElementById("photoInput").value = "";
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+function tryScanWithJsQR(img) {
+  if (typeof jsQR === 'undefined') {
+    document.getElementById("scannerStatus").textContent = "QR non détecté — réessayez";
+    showToast("QR non détecté dans la photo");
+    return;
+  }
+  var c = document.createElement("canvas");
+  c.width = img.width; c.height = img.height;
+  c.getContext("2d").drawImage(img, 0, 0);
+  var imageData = c.getContext("2d").getImageData(0, 0, c.width, c.height);
+  var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
+  if (code && code.data) {
+    stopScanner();
+    processQR(code.data);
+  } else {
+    document.getElementById("scannerStatus").textContent = "QR non détecté — réessayez";
+    showToast("QR non détecté dans la photo");
+  }
 }
 
 function processQR(data) {
