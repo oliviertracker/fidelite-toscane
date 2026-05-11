@@ -1,4 +1,4 @@
-const CACHE = 'latoscane-v3';
+const CACHE = 'latoscane-v4';
 const ASSETS = [
   './carte-client.html',
   './caisse-patron.html',
