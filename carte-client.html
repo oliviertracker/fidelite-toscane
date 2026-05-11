@@ -297,31 +297,50 @@ function toggleMenu() {
 // Lire les tampons depuis URL (retour de l'app caisse)
 function checkUrlParams() {
   var params = new URLSearchParams(window.location.search);
-  var newStamps = params.get("newstamps");
-  var fromCaisse = params.get("from");
-  if (newStamps !== null && fromCaisse === "caisse") {
-    var s = getState();
-    var n = parseInt(newStamps, 10);
-    if (n > s.stamps) {
-      var added = n - s.stamps;
-      s.stamps = n;
-      if (!s.stampLog) s.stampLog = [];
-      for (var i = 0; i < added; i++) {
-        var now = new Date();
-        var mins = now.getMinutes() < 10 ? "0" + now.getMinutes() : "" + now.getMinutes();
-        s.stampLog.push(now.toLocaleDateString("fr-FR") + " à " + now.getHours() + "h" + mins);
+  var id = params.get("id");
+  var stampsParam = params.get("stamps");
+  var nameParam = params.get("name");
+  var sig = params.get("sig");
+
+  if (id && stampsParam !== null && sig) {
+    var newStamps = parseInt(stampsParam, 10);
+    var name = decodeURIComponent(nameParam || "");
+    var expectedSig = sign(id, newStamps, name);
+    if (sig === expectedSig) {
+      var s = getState();
+      // Même carte : mettre à jour les tampons
+      if (s.id === id || s.stamps === 0) {
+        var prev = s.stamps;
+        if (id !== s.id) { s.id = id; }
+        if (name && !s.name) s.name = name;
+        if (newStamps !== prev) {
+          var added = newStamps - prev;
+          s.stamps = newStamps;
+          if (!s.stampLog) s.stampLog = [];
+          if (added > 0) {
+            for (var i = 0; i < added; i++) {
+              var now = new Date();
+              var mins = now.getMinutes() < 10 ? "0" + now.getMinutes() : "" + now.getMinutes();
+              s.stampLog.push(now.toLocaleDateString("fr-FR") + " à " + now.getHours() + "h" + mins);
+            }
+          } else {
+            s.stampLog = [];
+          }
+          saveState(s);
+          window.history.replaceState({}, "", window.location.pathname);
+          if (newStamps >= 10) {
+            document.getElementById("rewardBody").innerHTML =
+              (s.name ? "<strong>" + s.name + "</strong>, votre carte est complète !<br>" : "Votre carte est complète !<br>") +
+              "Vous gagnez <strong>1 pizza offerte</strong> au choix.";
+            document.getElementById("rewardModal").classList.add("open");
+          } else if (added > 0) {
+            showToast(added === 1 ? "Tampon " + newStamps + "/10 ajouté !" : added + " tampons ajoutés !");
+          }
+        }
       }
-      saveState(s);
-      // Nettoyer l'URL
       window.history.replaceState({}, "", window.location.pathname);
-      if (n >= 10) {
-        document.getElementById("rewardBody").innerHTML = (s.name ? "<strong>" + s.name + "</strong>, votre carte est complète !<br>" : "Votre carte est complète !<br>") + "Vous gagnez <strong>1 pizza offerte</strong> au choix.";
-        document.getElementById("rewardModal").classList.add("open");
-      } else {
-        showToast("Tampon " + n + "/10 ajouté !");
-      }
+      return s;
     }
-    return s;
   }
   return getState();
 }
