@@ -111,9 +111,8 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
     <div class="header-badge">Accès patron</div>
   </div>
   <div id="homeView">
-    <button class="scan-btn" onclick="startScanner()">📷 Scanner la carte du client</button>
     <div class="code-entry-card">
-      <div class="code-entry-label">ou saisir le code de la carte</div>
+      <div class="code-entry-label">Saisir le code de la carte client</div>
       <div class="code-row">
         <input type="text" id="codeInput" class="code-input" placeholder="ex : A3X7" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
         <button class="code-btn" onclick="submitCode()">→</button>
@@ -156,23 +155,6 @@ body{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40p
   </div>
 </div>
 
-<!-- SCANNER OVERLAY -->
-<div class="scanner-overlay" id="scannerOverlay">
-  <div class="scanner-title">Scanner la carte du client</div>
-  <div class="scanner-sub">Pointez vers le QR code sur son téléphone</div>
-  <div class="video-wrap">
-    <video id="camVideo" autoplay playsinline muted></video>
-    <div class="corners"></div>
-    <div class="corners corners-b"></div>
-    <div class="scan-line"></div>
-  </div>
-  <canvas id="camCanvas"></canvas>
-  <div class="scanner-status" id="scannerStatus">Recherche du QR code…</div>
-  <button class="btn-cancel" onclick="stopScanner()">Annuler</button>
-  <!-- FIX: label + input séparés (HTML valide, fonctionne sur iOS/Android) -->
-  <label class="btn-photo" for="photoInput">📁 Utiliser une photo à la place</label>
-  <input type="file" accept="image/*" id="photoInput" onchange="handlePhoto(event)">
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -436,7 +418,7 @@ function showReturnQR() {
 function showView(v) {
   document.getElementById("homeView").style.display = v==="home"?"block":"none";
   document.getElementById("newClientCard").style.display = v==="home"?"block":"none";
-  document.getElementById("clientCard").classList.toggle("open", v==="client"||v==="qr");
+  document.getElementById("clientCard").classList.toggle("open", v==="client");
   document.getElementById("actionButtons").style.display = v==="client"?"block":"none";
   document.getElementById("qrReturnCard").classList.toggle("open", v==="qr");
 }
